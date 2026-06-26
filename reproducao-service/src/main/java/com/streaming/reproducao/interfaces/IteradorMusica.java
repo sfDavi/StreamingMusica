@@ -1,6 +1,6 @@
-package com.streaming.catalogo.interfaces;
+package com.streaming.reproducao.interfaces;
 
-import com.streaming.catalogo.models.Musica;
+import com.streaming.reproducao.models.Musica;
 
 public interface IteradorMusica {
 

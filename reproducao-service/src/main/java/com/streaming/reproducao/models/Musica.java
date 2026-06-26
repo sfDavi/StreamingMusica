@@ -1,4 +1,4 @@
-package com.streaming.catalogo.models;
+package com.streaming.reproducao.models;
 
 import java.util.UUID;
 
@@ -8,6 +8,8 @@ public class Musica {
     private String titulo;
     private int duracao;
     private int bpm;
+
+    public Musica() {}
 
     public Musica(UUID id, String titulo, int duracao, int bpm) {
         this.id = id;
@@ -20,4 +22,8 @@ public class Musica {
     public String getTitulo() { return titulo; }
     public int getDuracao() { return duracao; }
     public int getBpm() { return bpm; }
+    public void setId(UUID id) { this.id = id; }
+    public void setTitulo(String titulo) { this.titulo = titulo; }
+    public void setDuracao(int duracao) { this.duracao = duracao; }
+    public void setBpm(int bpm) { this.bpm = bpm; }
 }
