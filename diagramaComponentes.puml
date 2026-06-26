@@ -1,0 +1,60 @@
+@startuml
+title Fase II - Diagrama de componentes
+
+actor "Usuário" as user
+
+node "Dispositivos do Usuário" as devices {
+  artifact "App Celular" as celular
+  artifact "App Smart TV" as tv
+}
+
+package "Containers Docker" as net {
+
+  node "Container: catalogo-service\n<<memória isolada / heap próprio>>" as cat {
+    component "Serviço de Catálogo\n(expõe Iterator de coleções)" as catComp
+    database "BD Catálogo" as catDb
+    catComp --> catDb : JDBC (local ao container)
+  }
+
+  node "Container: reproducao-service\n<<memória isolada / heap próprio>>" as rep {
+    component "Serviço de Reproducao\n(Play Queue + Strategy + Observer)" as repComp
+    database "Cache de Sessão" as repCache
+    repComp --> repCache : local ao container
+  }
+
+  node "Container: telemetria-service\n<<memória isolada>>" as tel {
+    component "Módulo de Telemetria de Dispositivos" as telComp
+  }
+
+  node "Container: histórico-service\n<<memória isolada>>" as hist {
+    component "Módulo de Histórico em Tempo Real" as histComp
+    database "BD Histórico\n(Retrospectiva)" as histDb
+    histComp --> histDb : local ao container
+  }
+
+  queue "Message Broker" as broker
+}
+
+'Comunicação SÍNCRONA (REST/HTTP)
+user --> celular
+user --> tv
+celular --> repComp : REST / HTTP  <<síncrono>>
+tv --> repComp : REST / HTTP  <<sincrono>>
+repComp --> catComp : REST / HTTP\nGET /coleções , GET /faixas\n<<síncrono - obtem Iterator>>
+
+'Comunicação ASSÍNCRONA (eventos / fila)
+repComp ..> broker : publish( EventoEstadoPlayer )\n<<assíncrono>>
+broker ..> telComp : EventoEstadoPlayer\n<<assíncrono>>
+broker ..> histComp : EventoEstadoPlayer\n<<assíncrono>>
+telComp ..> celular : push de sincronizacao\n<<assíncrono>>
+telComp ..> tv : push de sincronizacao\n<<assíncrono>>
+
+legend
+  Cada container é um processo isolado sem memória compartilhada.
+  Linha cheia  = comunicação SÍNCRONA  (REST/HTTP)
+  Linha tracejada = comunicação ASSÍNCRONA (eventos no broker)
+endlegend
+
+@enduml
+
+

@@ -1,0 +1,233 @@
+@startuml fase3_dcd
+title Fase III
+
+
+package "Servico de Catalogo (Acervo Estatico)" {
+
+
+  class Musica {
+    - id : UUID
+    - titulo : String
+    - duracao : int
+    - bpm : int
+    + getId() : UUID
+    + getTitulo() : String
+    + getDuracao() : int
+    + getBpm() : int
+  }
+
+
+  ' ===================== ITERATOR (RN01) =====================
+  interface IteradorMusica {
+    + temProximo() : boolean
+    + proximo() : Musica
+    + reiniciar() : void
+  }
+
+
+  interface ColecaoMusical {
+    + criarIterador() : IteradorMusica
+  }
+
+
+  class Album {
+    - titulo : String
+    - artista : String
+    - faixas : List<Musica>
+    + criarIterador() : IteradorMusica
+  }
+
+
+  class ListaRecomendacao {
+    - grafoSimilaridade : Grafo<Musica>
+    - raiz : Musica
+    + criarIterador() : IteradorMusica
+  }
+
+
+  class HistoricoBusca {
+    - cache : Map<String, Musica>
+    + criarIterador() : IteradorMusica
+  }
+
+
+  class IteradorLista {
+    - faixas : List<Musica>
+    - posicao : int
+    + temProximo() : boolean
+    + proximo() : Musica
+    + reiniciar() : void
+  }
+
+
+  class IteradorGrafo {
+    - grafo : Grafo<Musica>
+    - visitados : Set<Musica>
+    - fila : Queue<Musica>
+    + temProximo() : boolean
+    + proximo() : Musica
+    + reiniciar() : void
+  }
+
+
+  class IteradorCache {
+    - entradas : List<Musica>
+    - posicao : int
+    + temProximo() : boolean
+    + proximo() : Musica
+    + reiniciar() : void
+  }
+
+
+  ColecaoMusical <|.. Album
+  ColecaoMusical <|.. ListaRecomendacao
+  ColecaoMusical <|.. HistoricoBusca
+
+
+  IteradorMusica <|.. IteradorLista
+  IteradorMusica <|.. IteradorGrafo
+  IteradorMusica <|.. IteradorCache
+
+
+  Album ..> IteradorLista : <<create>>
+  ListaRecomendacao ..> IteradorGrafo : <<create>>
+  HistoricoBusca ..> IteradorCache : <<create>>
+
+
+  IteradorLista o--> "0..*" Musica
+  IteradorGrafo o--> "0..*" Musica
+  IteradorCache o--> "0..*" Musica
+}
+
+
+package "Servico de Reproducao (Sessao Dinamica)" {
+
+
+  ' ===================== STRATEGY (RN02) =====================
+  interface EstrategiaSelecao {
+    + selecionarProxima(fila : List<Musica>, atual : Musica, jaTocadas : List<Musica>) : Musica
+  }
+
+
+  class EstrategiaSequencial {
+    + selecionarProxima(fila : List<Musica>, atual : Musica, jaTocadas : List<Musica>) : Musica
+  }
+
+
+  class EstrategiaShuffle {
+    - aleatorio : Random
+    + selecionarProxima(fila : List<Musica>, atual : Musica, jaTocadas : List<Musica>) : Musica
+  }
+
+
+  class EstrategiaSmartMix {
+    + selecionarProxima(fila : List<Musica>, atual : Musica, jaTocadas : List<Musica>) : Musica
+    - distanciaBpm(a : Musica, b : Musica) : int
+  }
+
+
+  EstrategiaSelecao <|.. EstrategiaSequencial
+  EstrategiaSelecao <|.. EstrategiaShuffle
+  EstrategiaSelecao <|.. EstrategiaSmartMix
+
+
+  class PlayQueue {
+    - fila : List<Musica>
+    - estrategia : EstrategiaSelecao
+    + adicionarColecao(it : IteradorMusica) : void
+    + setEstrategia(e : EstrategiaSelecao) : void
+    + proximaMusica(atual : Musica, jaTocadas : List<Musica>) : Musica
+    + estaVazia() : boolean
+  }
+
+
+  ' ===================== OBSERVER (RN03) =====================
+  enum StatusReproducao {
+    PLAY
+    PAUSE
+    STOP
+  }
+
+
+  class EstadoPlayer {
+    - tituloAtual : String
+    - tempoAtualMs : long
+    - status : StatusReproducao
+    + getTituloAtual() : String
+    + getTempoAtualMs() : long
+    + getStatus() : StatusReproducao
+  }
+
+
+  interface SujeitoPlayer {
+    + adicionarObservador(o : ObservadorPlayer) : void
+    + removerObservador(o : ObservadorPlayer) : void
+    + notificar() : void
+  }
+
+
+  interface ObservadorPlayer {
+    + atualizar(estado : EstadoPlayer) : void
+  }
+
+
+  class Player {
+    - estado : EstadoPlayer
+    - fila : PlayQueue
+    - observadores : List<ObservadorPlayer>
+    + play() : void
+    + pause() : void
+    + proxima() : void
+    + adicionarObservador(o : ObservadorPlayer) : void
+    + removerObservador(o : ObservadorPlayer) : void
+    + notificar() : void
+  }
+
+
+  class ObservadorTelemetria {
+    - dispositivos : List<Dispositivo>
+    + atualizar(estado : EstadoPlayer) : void
+  }
+
+
+  class ObservadorHistorico {
+    - repositorio : HistoricoReproducao
+    + atualizar(estado : EstadoPlayer) : void
+  }
+
+
+  class Dispositivo {
+    - identificador : String
+    - protocoloDeSincronizacao : String
+    + sincronizar(estado : EstadoPlayer) : void
+  }
+
+
+  class HistoricoReproducao {
+    - registros : List<Musica>
+    + registrar(estado : EstadoPlayer) : void
+  }
+
+
+  SujeitoPlayer <|.. Player
+  ObservadorPlayer <|.. ObservadorTelemetria
+  ObservadorPlayer <|.. ObservadorHistorico
+
+
+  Player *--> "1" EstadoPlayer
+  Player o--> "1" PlayQueue
+  Player o--> "0..*" ObservadorPlayer
+  PlayQueue o--> "1" EstrategiaSelecao
+  EstadoPlayer --> StatusReproducao
+  ObservadorTelemetria o--> "1..*" Dispositivo
+  ObservadorHistorico --> "1" HistoricoReproducao
+}
+
+
+' ===== Fronteira entre os dois servicos =====
+PlayQueue ..> IteradorMusica : consome\n(agnostico a estrutura)
+PlayQueue o--> "0..*" Musica
+EstrategiaSmartMix ..> Musica : analisa BPM
+
+
+@enduml
