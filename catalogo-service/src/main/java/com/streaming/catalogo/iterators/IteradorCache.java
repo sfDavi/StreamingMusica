@@ -5,6 +5,7 @@ import com.streaming.catalogo.models.Musica;
 
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 public class IteradorCache implements IteradorMusica {
 
@@ -17,11 +18,16 @@ public class IteradorCache implements IteradorMusica {
     }
 
     @Override
-    public boolean temProximo() { return false; }
+    public boolean temProximo() { return posicao < entradas.size(); }
 
     @Override
-    public Musica proximo() { return null; }
+    public Musica proximo() {
+        if (!temProximo()) {
+            throw new NoSuchElementException("Nao ha proxima musica no cache");
+        }
+        return entradas.get(posicao++);
+    }
 
     @Override
-    public void reiniciar() {}
+    public void reiniciar() { posicao = 0; }
 }

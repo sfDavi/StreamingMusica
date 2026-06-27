@@ -16,6 +16,16 @@ public class EstrategiaShuffle implements EstrategiaSelecao {
 
     @Override
     public Musica selecionarProxima(List<Musica> fila, Musica atual, List<Musica> jaTocadas) {
-        return null;
+        if (fila == null || fila.isEmpty()) {
+            return null;
+        }
+
+        List<Musica> candidatas = fila.stream()
+                .filter(musica -> jaTocadas == null || !jaTocadas.contains(musica))
+                .toList();
+        if (candidatas.isEmpty()) {
+            candidatas = fila;
+        }
+        return candidatas.get(aleatorio.nextInt(candidatas.size()));
     }
 }

@@ -10,6 +10,7 @@ O sistema é composto por quatro serviços isolados, cada um com sua própria me
 
 ```
 docker-compose.yml
+broker RabbitMQ      → porta 5672, UI 15672
 catalogo-service/    → porta 8081
 reproducao-service/  → porta 8082
 telemetria-service/  → porta 8083
@@ -22,8 +23,9 @@ historico-service/   → porta 8084
 |--------|---------|------|-----------|
 | Cliente (app/TV) | `reproducao-service` | REST síncrono | Comandos de play, pause, próxima, troca de estratégia |
 | `reproducao-service` | `catalogo-service` | REST síncrono | Busca de coleções e faixas para montar a fila |
-| `reproducao-service` | `telemetria-service` | HTTP assíncrono | Notificação de mudança de estado do player |
-| `reproducao-service` | `historico-service` | HTTP assíncrono | Registro de eventos para retrospectiva |
+| `reproducao-service` | RabbitMQ | AMQP assíncrono | Publicação de mudança de estado do player |
+| RabbitMQ | `telemetria-service` | AMQP assíncrono | Sincronização de dispositivos |
+| RabbitMQ | `historico-service` | AMQP assíncrono | Registro de eventos para retrospectiva |
 
 ---
 
@@ -80,9 +82,11 @@ StreamingMusica/
 │       │   └── PlayQueue.java                  # Fila de reprodução (consome IteradorMusica)
 │       ├── player/
 │       │   └── Player.java                     # Sujeito observável; orquestra fila e estado
+│       ├── config/
+│       │   ├── ReproducaoConfig.java           # Beans da fila, player e RestTemplate
+│       │   └── RabbitMqConfig.java             # Exchange fanout, filas e conversor JSON
 │       ├── observers/
-│       │   ├── ObservadorTelemetria.java       # Notifica dispositivos do usuário
-│       │   └── ObservadorHistorico.java        # Registra eventos no histórico
+│       │   └── ObservadorRabbitMq.java         # Publica eventos de estado no RabbitMQ
 │       └── controller/
 │           └── ReproducaoController.java       # Endpoints REST do player
 │
@@ -177,11 +181,14 @@ Player (implements SujeitoPlayer)
 ObservadorPlayer (interface)
     └── atualizar(EstadoPlayer estado)
          |
-         ├── ObservadorTelemetria → chama telemetria-service via HTTP (push p/ celular/TV)
-         └── ObservadorHistorico  → chama historico-service  via HTTP (registra evento)
+         └── ObservadorRabbitMq → publica evento no exchange fanout player.estado.exchange
+
+RabbitMQ
+    ├── telemetria.estado-player.queue → telemetria-service sincroniza celular/TV
+    └── historico.estado-player.queue  → historico-service registra evento
 ```
 
-**Fluxo:** A cada comando do usuário (`play`, `pause`, `proxima`), o `Player` atualiza seu `EstadoPlayer` e chama `notificar()`, que itera sobre `List<ObservadorPlayer>` e invoca `atualizar(estado)` em cada um. `ObservadorTelemetria` e `ObservadorHistorico` traduzem essa notificação em chamadas HTTP assíncronas para os respectivos microserviços — completamente transparente para o `Player`.
+**Fluxo:** A cada comando do usuário (`play`, `pause`, `proxima`), o `Player` atualiza seu `EstadoPlayer` e chama `notificar()`, que invoca `ObservadorRabbitMq.atualizar(estado)`. O observador publica um evento JSON no exchange fanout `player.estado.exchange`. As filas duráveis `telemetria.estado-player.queue` e `historico.estado-player.queue` ficam vinculadas a esse exchange, permitindo que `telemetria-service` e `historico-service` consumam os eventos de forma assíncrona sem chamadas HTTP entre esses módulos.
 
 ---
 

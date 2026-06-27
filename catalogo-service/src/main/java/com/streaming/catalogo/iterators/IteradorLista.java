@@ -4,6 +4,7 @@ import com.streaming.catalogo.interfaces.IteradorMusica;
 import com.streaming.catalogo.models.Musica;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 public class IteradorLista implements IteradorMusica {
 
@@ -16,11 +17,16 @@ public class IteradorLista implements IteradorMusica {
     }
 
     @Override
-    public boolean temProximo() { return false; }
+    public boolean temProximo() { return posicao < faixas.size(); }
 
     @Override
-    public Musica proximo() { return null; }
+    public Musica proximo() {
+        if (!temProximo()) {
+            throw new NoSuchElementException("Nao ha proxima musica na lista");
+        }
+        return faixas.get(posicao++);
+    }
 
     @Override
-    public void reiniciar() {}
+    public void reiniciar() { posicao = 0; }
 }

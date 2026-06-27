@@ -15,5 +15,7 @@ public class ObservadorTelemetria implements ObservadorPlayer {
     }
 
     @Override
-    public void atualizar(EstadoPlayer estado) {}
+    public void atualizar(EstadoPlayer estado) {
+        dispositivos.forEach(dispositivo -> dispositivo.sincronizar(estado));
+    }
 }

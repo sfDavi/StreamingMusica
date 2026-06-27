@@ -1,6 +1,20 @@
-version: '3.8'
-
 services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=streaming
+      - RABBITMQ_DEFAULT_PASS=streaming
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - streaming-net
+
   catalogo-service:
     build: ./catalogo-service
     ports:
@@ -17,12 +31,15 @@ services:
     environment:
       - SERVER_PORT=8082
       - CATALOGO_URL=http://catalogo-service:8081
-      - TELEMETRIA_URL=http://telemetria-service:8083
-      - HISTORICO_URL=http://historico-service:8084
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=streaming
+      - SPRING_RABBITMQ_PASSWORD=streaming
     depends_on:
-      - catalogo-service
-      - telemetria-service
-      - historico-service
+      rabbitmq:
+        condition: service_healthy
+      catalogo-service:
+        condition: service_started
     networks:
       - streaming-net
 
@@ -32,6 +49,13 @@ services:
       - "8083:8083"
     environment:
       - SERVER_PORT=8083
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=streaming
+      - SPRING_RABBITMQ_PASSWORD=streaming
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     networks:
       - streaming-net
 
@@ -41,6 +65,13 @@ services:
       - "8084:8084"
     environment:
       - SERVER_PORT=8084
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=streaming
+      - SPRING_RABBITMQ_PASSWORD=streaming
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     networks:
       - streaming-net
 

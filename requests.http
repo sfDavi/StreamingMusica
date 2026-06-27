@@ -1,0 +1,102 @@
+@catalogo = http://localhost:8081/api/catalogo
+@player = http://localhost:8082/api/player
+@telemetria = http://localhost:8083/api/telemetria
+@historico = http://localhost:8084/api/historico
+
+### Listar albuns
+# curl -X GET http://localhost:8081/api/catalogo/albuns
+GET {{catalogo}}/albuns
+
+### Listar musicas do catalogo
+# curl -X GET http://localhost:8081/api/catalogo/musicas
+GET {{catalogo}}/musicas
+
+### Obter faixas de um album
+# curl -X GET http://localhost:8081/api/catalogo/albuns/7d4f1d48-9f9e-4d53-b45d-37e04a0c0f01/faixas
+GET {{catalogo}}/albuns/7d4f1d48-9f9e-4d53-b45d-37e04a0c0f01/faixas
+
+### Obter recomendacoes a partir de uma musica
+# curl -X GET http://localhost:8081/api/catalogo/recomendacoes/1fc8da99-0f3a-4e8a-8f2f-264064a18f03
+GET {{catalogo}}/recomendacoes/1fc8da99-0f3a-4e8a-8f2f-264064a18f03
+
+### Obter historico de busca do catalogo
+# curl -X GET http://localhost:8081/api/catalogo/historico
+GET {{catalogo}}/historico
+
+### Consultar fila vazia
+# curl -X GET http://localhost:8082/api/player/fila
+GET {{player}}/fila
+
+### Adicionar album na fila
+# curl -X POST "http://localhost:8082/api/player/fila/adicionar?tipo=album&id=7d4f1d48-9f9e-4d53-b45d-37e04a0c0f01"
+POST {{player}}/fila/adicionar?tipo=album&id=7d4f1d48-9f9e-4d53-b45d-37e04a0c0f01
+
+### Adicionar recomendacoes na fila
+# curl -X POST "http://localhost:8082/api/player/fila/adicionar?tipo=recomendacoes&id=1fc8da99-0f3a-4e8a-8f2f-264064a18f03"
+POST {{player}}/fila/adicionar?tipo=recomendacoes&id=1fc8da99-0f3a-4e8a-8f2f-264064a18f03
+
+### Adicionar historico de busca na fila
+# curl -X POST "http://localhost:8082/api/player/fila/adicionar?tipo=historico&id=all"
+POST {{player}}/fila/adicionar?tipo=historico&id=all
+
+### Selecionar estrategia sequencial
+# curl -X PUT "http://localhost:8082/api/player/estrategia?estrategia=sequencial"
+PUT {{player}}/estrategia?estrategia=sequencial
+
+### Selecionar estrategia shuffle
+# curl -X PUT "http://localhost:8082/api/player/estrategia?estrategia=shuffle"
+PUT {{player}}/estrategia?estrategia=shuffle
+
+### Selecionar estrategia smartmix
+# curl -X PUT "http://localhost:8082/api/player/estrategia?estrategia=smartmix"
+PUT {{player}}/estrategia?estrategia=smartmix
+
+### Play
+# curl -X POST http://localhost:8082/api/player/play
+POST {{player}}/play
+
+### Proxima musica
+# curl -X POST http://localhost:8082/api/player/proxima
+POST {{player}}/proxima
+
+### Pause
+# curl -X POST http://localhost:8082/api/player/pause
+POST {{player}}/pause
+
+### Consultar estado atual
+# curl -X GET http://localhost:8082/api/player/estado
+GET {{player}}/estado
+
+### Consultar sincronizacoes recebidas pela telemetria
+# curl -X GET http://localhost:8083/api/telemetria/sincronizacoes
+GET {{telemetria}}/sincronizacoes
+
+### Enviar evento manual para telemetria
+# curl -X POST http://localhost:8083/api/telemetria/evento -H "Content-Type: application/json" -d "{\"tituloAtual\":\"Teste Manual\",\"tempoAtualMs\":0,\"status\":\"PLAY\"}"
+POST {{telemetria}}/evento
+Content-Type: application/json
+
+{
+  "tituloAtual": "Teste Manual",
+  "tempoAtualMs": 0,
+  "status": "PLAY"
+}
+
+### Consultar retrospectiva do historico
+# curl -X GET http://localhost:8084/api/historico/retrospectiva
+GET {{historico}}/retrospectiva
+
+### Listar eventos recebidos pelo historico
+# curl -X GET http://localhost:8084/api/historico/eventos
+GET {{historico}}/eventos
+
+### Enviar evento manual para historico
+# curl -X POST http://localhost:8084/api/historico/evento -H "Content-Type: application/json" -d "{\"tituloAtual\":\"Teste Manual\",\"tempoAtualMs\":0,\"status\":\"PLAY\"}"
+POST {{historico}}/evento
+Content-Type: application/json
+
+{
+  "tituloAtual": "Teste Manual",
+  "tempoAtualMs": 0,
+  "status": "PLAY"
+}

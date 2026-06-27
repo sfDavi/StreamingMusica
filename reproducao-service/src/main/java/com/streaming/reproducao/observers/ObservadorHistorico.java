@@ -13,5 +13,7 @@ public class ObservadorHistorico implements ObservadorPlayer {
     }
 
     @Override
-    public void atualizar(EstadoPlayer estado) {}
+    public void atualizar(EstadoPlayer estado) {
+        repositorio.registrar(estado);
+    }
 }

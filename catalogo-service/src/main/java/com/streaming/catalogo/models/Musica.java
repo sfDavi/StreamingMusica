@@ -1,6 +1,7 @@
 package com.streaming.catalogo.models;
 
 import java.util.UUID;
+import java.util.Objects;
 
 public class Musica {
 
@@ -20,4 +21,16 @@ public class Musica {
     public String getTitulo() { return titulo; }
     public int getDuracao() { return duracao; }
     public int getBpm() { return bpm; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Musica musica)) return false;
+        return Objects.equals(id, musica.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }
